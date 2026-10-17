@@ -8,6 +8,39 @@
   var RULE_VERSION = 'R2.3';
   var FORMULA_VERSION = 'F1.2';
   var statusTimer = null;
+  var UNLOCK_STORAGE_KEY = 'tdd_unlock_v1';
+  var UNLOCK_KEYS = [
+    "8bb676b483a78cc8185dac2bba28b88f55b72a4f893b32c3d5dd6f66da41fcf4",
+    "596ea9f33137699d6181bf50d6bb9c8e5aef27e0bf3779b7e02e378e438697c3",
+    "852f18d088a76850fd01a46105e70294c17bdfbcf91582debc750eec1fbead08",
+    "2897c5bb91002c2a441ca8c161c3974cb6038434740d83f5d0a9dff19ec84948",
+    "7f7e644428a15e0e18ed286f08dfa07757540804402dab5a3164e0b83bd9e1d3",
+    "ef1f1a8141048ed7e2b5d237830bc29433fcff54f538b0f64e4efed600e10150",
+    "fa1a2cff8a2e0206318b16837e7dcbc59e4965d6f152f5a4af4341ded026b920",
+    "9a28ee64978fd7c5d53a0362880ad80c6969ea9241224181331f7f58d6d17eba",
+    "669b8c3f2a9c3cdd401a88bc6a9557d6a9ad7ffc119362c084c50569494c0810",
+    "32c07c13431a7a774be9a01168022ac6673315e196a1fa397deadc589d7eb3d1",
+    "2aeb3e571c4f5dec2af0243839343ec9b96995125bffd698282cd3d2407e26b8",
+    "064d8fc82879bdc66b380dc453872c60f35bcab65f1b005646bf3a79c46bb606",
+    "99d4820d478ed7f76049b2f618000e1595c1151ee585d0014a08eeec55c40140",
+    "b2df57e5d67c4d51ae25cae26b82098b652a1448d667cc1f496a8becf39938c4",
+    "d562050be0b903c854c2e909de274d9c2d3c90e1ad3a0b18dfba728c718f6130",
+    "56cf8b85ec3e7f8e2726de80898b04df5975115cbab81a281f1bb46cb1e2954a",
+    "ee76232758c9b4adb3f85fdb57d29da9202a0081a1dc9fc00f61f2adacd89c2d",
+    "e522ab8aa5b6824e6218f7b62c896eb72e710ac607a1a8eb3ac3d24aca7b9775",
+    "0e65990c888aff6819d59c5df54284512a365746f0054052ac44cfd530a5083a",
+    "283b6e9be6d9faf242af8ece2003ede93e1fe50912c50c71ae25d1a4d886effe",
+    "04ed0af4e02eb8ee3242764ae43deb0a5831996111c9756036d4f3b7fb4dc422",
+    "fb001bacee90ab676aa5bdab87ac6727739cd7f44b910ed9e69167eb4cae3def",
+    "45cfb8101031502b0ec955da2ccba3097933cec0ed6b5b2dc69b87b5b5c29205",
+    "7c9161def18e321d9ff4579d54ed28a24dfff7e8d38b82877f67c74463887af6",
+    "5a12f8ad175b1fca7d5c79360a39248c46274e58ef556ae1d150af619d99ab87",
+    "51691f04eafb608bc589db018b7c309930168e00578f40fef9c3f5209c47dc50",
+    "efdcfc66761ba21efacee723991bd4b188d45baa7c5fbcac773149e73b70ac7d",
+    "bf1de218ad71466fdd419ba173b9dd4d37e70d7996229f10e78c94efedcd8edd",
+    "9753b8badfb732553379b9b92700ddc34dd0412adacd0aca3f3a833a9a13605e",
+    "f0ad63a5d7ef4794399635f2484d20513dbded05b98571d304bf64a23a661902",
+  ];;
   var storageKey = 'tradeDecisionCardSnapshotsV2';
   var draftKey = 'tradeDecisionCardDraftV3';
   var autoSaveTimer = null;
@@ -16,6 +49,108 @@
   var scrollFrame = null;
 
   function exists(selector) { return Boolean($(selector)); }
+
+  function sha256Hex(input) {
+    var utf8 = unescape(encodeURIComponent(input));
+    var bytes = [];
+    var i;
+    for (i = 0; i < utf8.length; i += 1) bytes.push(utf8.charCodeAt(i));
+    var bitLen = bytes.length * 8;
+    bytes.push(0x80);
+    while (bytes.length % 64 !== 56) bytes.push(0);
+    bytes.push(0, 0, 0, 0);
+    bytes.push((bitLen >>> 24) & 255, (bitLen >>> 16) & 255, (bitLen >>> 8) & 255, bitLen & 255);
+    var K = [0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+    var H = [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+    function rotr(n, x) { return (x >>> n) | (x << (32 - n)); }
+    var w = new Array(64);
+    for (i = 0; i < bytes.length; i += 64) {
+      var j;
+      for (j = 0; j < 16; j += 1) {
+        w[j] = ((bytes[i + j * 4] << 24) | (bytes[i + j * 4 + 1] << 16) | (bytes[i + j * 4 + 2] << 8) | bytes[i + j * 4 + 3]) >>> 0;
+      }
+      for (j = 16; j < 64; j += 1) {
+        var s0 = rotr(7, w[j - 15]) ^ rotr(18, w[j - 15]) ^ (w[j - 15] >>> 3);
+        var s1 = rotr(17, w[j - 2]) ^ rotr(19, w[j - 2]) ^ (w[j - 2] >>> 10);
+        w[j] = (w[j - 16] + s0 + w[j - 7] + s1) >>> 0;
+      }
+      var a = H[0], b = H[1], c = H[2], d = H[3], e = H[4], f = H[5], g = H[6], h = H[7];
+      for (j = 0; j < 64; j += 1) {
+        var S1 = rotr(6, e) ^ rotr(11, e) ^ rotr(25, e);
+        var ch = (e & f) ^ (~e & g);
+        var temp1 = (h + S1 + ch + K[j] + w[j]) >>> 0;
+        var S0 = rotr(2, a) ^ rotr(13, a) ^ rotr(22, a);
+        var maj = (a & b) ^ (a & c) ^ (b & c);
+        var temp2 = (S0 + maj) >>> 0;
+        h = g; g = f; f = e; e = (d + temp1) >>> 0;
+        d = c; c = b; b = a; a = (temp1 + temp2) >>> 0;
+      }
+      H[0] = (H[0] + a) >>> 0; H[1] = (H[1] + b) >>> 0; H[2] = (H[2] + c) >>> 0; H[3] = (H[3] + d) >>> 0;
+      H[4] = (H[4] + e) >>> 0; H[5] = (H[5] + f) >>> 0; H[6] = (H[6] + g) >>> 0; H[7] = (H[7] + h) >>> 0;
+    }
+    var out = '';
+    for (i = 0; i < 8; i += 1) {
+      var hex = H[i].toString(16);
+      while (hex.length < 8) hex = '0' + hex;
+      out += hex;
+    }
+    return out;
+  }
+
+  function normalizeUnlockKey(raw) {
+    return String(raw || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  }
+
+  function isUnlocked() {
+    try { return localStorage.getItem(UNLOCK_STORAGE_KEY) === 'ok'; } catch (e) { return false; }
+  }
+
+  function showUnlockScreen() {
+    var overlay = $('#unlockOverlay');
+    if (!overlay) return;
+    document.documentElement.classList.add('unlock-locked');
+    overlay.classList.add('show');
+    var input = $('#unlockInput');
+    if (input) input.focus();
+  }
+
+  function hideUnlockScreen() {
+    var overlay = $('#unlockOverlay');
+    if (!overlay) return;
+    overlay.classList.remove('show');
+    document.documentElement.classList.remove('unlock-locked');
+  }
+
+  function tryUnlock() {
+    var input = $('#unlockInput');
+    var error = $('#unlockError');
+    var key = normalizeUnlockKey(input ? input.value : '');
+    if (!key) {
+      if (error) { error.textContent = '请输入卡密'; error.classList.add('show'); }
+      return;
+    }
+    var hit = UNLOCK_KEYS.indexOf(sha256Hex(key)) >= 0;
+    if (hit) {
+      try { localStorage.setItem(UNLOCK_STORAGE_KEY, 'ok'); } catch (e) { /* 隐私模式等场景忽略 */ }
+      hideUnlockScreen();
+      showStatus('解锁成功，欢迎使用交易决策研究室');
+    } else {
+      if (error) { error.textContent = '卡密无效，请核对后重新输入'; error.classList.add('show'); }
+      if (input) input.select();
+    }
+  }
+
+  function initUnlock() {
+    if (isUnlocked()) return;
+    showUnlockScreen();
+    var button = $('#unlockButton');
+    if (button) button.addEventListener('click', tryUnlock);
+    var input = $('#unlockInput');
+    if (input) {
+      input.addEventListener('keydown', function (event) { if (event.key === 'Enter') tryUnlock(); });
+      input.addEventListener('input', function () { var err = $('#unlockError'); if (err) err.classList.remove('show'); });
+    }
+  }
   function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
   function numberValue(selector, fallback) {
     var element = $(selector);
@@ -1153,6 +1288,7 @@
   }
 
   function initialize() {
+    initUnlock();
     if (supportsFlexGap()) document.documentElement.classList.add('supports-flex-gap');
     if (exists('#dataDate') && !$('#dataDate').value) $('#dataDate').value = isoDate(today());
     if (exists('#pmiDate') && !$('#pmiDate').value) $('#pmiDate').value = isoDate(today());
